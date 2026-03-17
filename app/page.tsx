@@ -1,4 +1,5 @@
 import HabitChecklist from '@/components/dashboard/HabitChecklist';
+import StatsPanel from '@/components/dashboard/StatsPanel';
 
 export default function Home() {
   return (
@@ -15,11 +16,7 @@ export default function Home() {
 
       <div className="flex flex-col md:flex-row gap-6">
         <HabitChecklist />
-        <div className="flex-1">
-          <div className="bg-surface rounded-xl p-5 text-gray-400 text-sm">
-            Stats panel coming soon...
-          </div>
-        </div>
+        <StatsPanel />
       </div>
     </main>
   );
