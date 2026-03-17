@@ -2,4 +2,7 @@ node_modules/
 .next/
 habits.db
 *.db-journal
+*.db-shm
+*.db-wal
+*.tsbuildinfo
 .superpowers/
