@@ -1,0 +1,5 @@
+node_modules/
+.next/
+habits.db
+*.db-journal
+.superpowers/
