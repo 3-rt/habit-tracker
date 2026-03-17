@@ -88,4 +88,42 @@ describe('habits data operations', () => {
 
     expect(habit.sort_order).toBe(3);
   });
+
+  it('reorders active habits and persists the new sequence', async () => {
+    insertHabit('Skincare', 1, '2026-03-17T00:00:00Z');
+    insertHabit('Gym', 2, '2026-03-18T00:00:00Z');
+    insertHabit('Read', 3, '2026-03-19T00:00:00Z');
+
+    const { PUT } = await import('@/app/api/habits/reorder/route');
+    const req = new NextRequest('http://localhost/api/habits/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ habitIds: [3, 1, 2] }),
+    });
+
+    const res = await PUT(req);
+    const habits = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(habits.map((habit: any) => habit.id)).toEqual([3, 1, 2]);
+    const rows = db.prepare(
+      'SELECT id, sort_order FROM habits WHERE archived_at IS NULL ORDER BY sort_order ASC'
+    ).all() as { id: number; sort_order: number }[];
+    expect(rows.map((row) => row.id)).toEqual([3, 1, 2]);
+  });
+
+  it('rejects reorder requests that include archived habits', async () => {
+    insertHabit('Skincare', 1, '2026-03-17T00:00:00Z');
+    insertHabit('Gym', 2, '2026-03-18T00:00:00Z');
+    insertHabit('Archived', 3, '2026-03-19T00:00:00Z', '2026-03-20T00:00:00Z');
+
+    const { PUT } = await import('@/app/api/habits/reorder/route');
+    const req = new NextRequest('http://localhost/api/habits/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ habitIds: [1, 3, 2] }),
+    });
+
+    const res = await PUT(req);
+
+    expect(res.status).toBe(400);
+  });
 });
