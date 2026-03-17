@@ -11,7 +11,7 @@ beforeEach(() => {
   db.pragma('foreign_keys = ON');
   const schema = fs.readFileSync(path.join(process.cwd(), 'db', 'schema.sql'), 'utf-8');
   db.exec(schema);
-  db.prepare("INSERT INTO habits (name, type, schedule, created_at) VALUES (?, ?, ?, ?)").run('Run', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z');
+  db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)").run('Run', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z', 1);
 });
 
 afterEach(() => {
@@ -46,7 +46,7 @@ describe('entries data operations', () => {
   });
 
   it('handles multi-step entry with entry_steps', () => {
-    db.prepare("INSERT INTO habits (name, type, schedule, created_at) VALUES (?, ?, ?, ?)").run('Morning', 'multi_step', '{"type":"daily"}', '2026-03-17T00:00:00Z');
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)").run('Morning', 'multi_step', '{"type":"daily"}', '2026-03-17T00:00:00Z', 2);
     const habitId = 2;
     db.prepare("INSERT INTO habit_steps (habit_id, name, sort_order) VALUES (?, ?, ?)").run(habitId, 'Step 1', 1);
     db.prepare("INSERT INTO habit_steps (habit_id, name, sort_order) VALUES (?, ?, ?)").run(habitId, 'Step 2', 2);

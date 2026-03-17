@@ -44,8 +44,8 @@ describe('stats data operations', () => {
   });
 
   it('counts weekly completions correctly', () => {
-    db.prepare("INSERT INTO habits (name, type, schedule, created_at) VALUES (?, ?, ?, ?)").run('Run', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z');
-    db.prepare("INSERT INTO habits (name, type, schedule, created_at) VALUES (?, ?, ?, ?)").run('Read', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z');
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)").run('Run', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z', 1);
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)").run('Read', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z', 2);
     const now = '2026-03-17T10:00:00Z';
     // Week of 2026-03-16 (Mon) to 2026-03-22 (Sun)
     db.prepare("INSERT INTO entries (habit_id, date, value, created_at, updated_at) VALUES (?, ?, ?, ?, ?)").run(1, '2026-03-16', 1, now, now);
@@ -62,7 +62,7 @@ describe('stats data operations', () => {
   });
 
   it('calculates completion rate over a week window', () => {
-    db.prepare("INSERT INTO habits (name, type, schedule, created_at) VALUES (?, ?, ?, ?)").run('Exercise', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z');
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)").run('Exercise', 'yes_no', '{"type":"daily"}', '2026-03-17T00:00:00Z', 1);
     const now = '2026-03-17T10:00:00Z';
     // 5 out of 7 days completed
     for (const date of ['2026-03-11', '2026-03-12', '2026-03-13', '2026-03-14', '2026-03-15']) {
@@ -78,7 +78,7 @@ describe('stats data operations', () => {
   });
 
   it('handles multi-step habit completion check via entry_steps', () => {
-    db.prepare("INSERT INTO habits (name, type, schedule, created_at) VALUES (?, ?, ?, ?)").run('Morning Routine', 'multi_step', '{"type":"daily"}', '2026-03-17T00:00:00Z');
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)").run('Morning Routine', 'multi_step', '{"type":"daily"}', '2026-03-17T00:00:00Z', 1);
     db.prepare("INSERT INTO habit_steps (habit_id, name, sort_order) VALUES (?, ?, ?)").run(1, 'Step 1', 1);
     db.prepare("INSERT INTO habit_steps (habit_id, name, sort_order) VALUES (?, ?, ?)").run(1, 'Step 2', 2);
     const now = '2026-03-17T10:00:00Z';
