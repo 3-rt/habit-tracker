@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS habits (
   schedule TEXT NOT NULL,
   unit TEXT,
   target REAL,
+  sort_order INTEGER NOT NULL,
   created_at TEXT NOT NULL,
   archived_at TEXT
 );

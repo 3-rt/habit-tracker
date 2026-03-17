@@ -23,6 +23,7 @@ export interface Habit {
   schedule: Schedule;
   unit: string | null;
   target: number | null;
+  sort_order: number;
   created_at: string;
   archived_at: string | null;
 }
