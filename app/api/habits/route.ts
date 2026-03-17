@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const includeArchived = searchParams.get('include_archived') === 'true';
   const query = includeArchived
-    ? 'SELECT * FROM habits ORDER BY created_at DESC'
-    : 'SELECT * FROM habits WHERE archived_at IS NULL ORDER BY created_at DESC';
+    ? 'SELECT * FROM habits ORDER BY sort_order ASC, id DESC'
+    : 'SELECT * FROM habits WHERE archived_at IS NULL ORDER BY sort_order ASC, id DESC';
   const habits = db().prepare(query).all();
   return NextResponse.json(habits.map((h: any) => ({ ...h, schedule: JSON.parse(h.schedule) })));
 }
@@ -23,7 +23,12 @@ export async function POST(req: NextRequest) {
   const { name, type, schedule, unit, target, steps } = body;
   const now = new Date().toISOString();
   const d = db();
-  const result = d.prepare('INSERT INTO habits (name, type, schedule, unit, target, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(name, type, JSON.stringify(schedule), unit || null, target || null, now);
+  const { maxSortOrder } = d.prepare(
+    'SELECT COALESCE(MAX(sort_order), 0) AS maxSortOrder FROM habits WHERE archived_at IS NULL'
+  ).get() as { maxSortOrder: number };
+  const result = d.prepare(
+    'INSERT INTO habits (name, type, schedule, unit, target, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(name, type, JSON.stringify(schedule), unit || null, target || null, maxSortOrder + 1, now);
   const habitId = result.lastInsertRowid;
   if (type === 'multi_step' && steps?.length) {
     const insert = d.prepare('INSERT INTO habit_steps (habit_id, name, sort_order) VALUES (?, ?, ?)');
