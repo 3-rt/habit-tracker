@@ -11,6 +11,7 @@ interface HabitListProps {
 export default function HabitList({ onEdit, refreshKey }: HabitListProps) {
   const [habits, setHabits] = useState<HabitWithSteps[]>([]);
   const [loading, setLoading] = useState(true);
+  const [draggedHabitId, setDraggedHabitId] = useState<number | null>(null);
 
   const fetchHabits = useCallback(async () => {
     setLoading(true);
@@ -57,6 +58,37 @@ export default function HabitList({ onEdit, refreshKey }: HabitListProps) {
   const active = habits.filter((h) => !h.archived_at);
   const archived = habits.filter((h) => h.archived_at);
 
+  const reorderActiveHabits = async (sourceHabitId: number, targetHabitId: number) => {
+    if (sourceHabitId === targetHabitId) return;
+
+    const sourceIndex = active.findIndex((habit) => habit.id === sourceHabitId);
+    const targetIndex = active.findIndex((habit) => habit.id === targetHabitId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const reorderedActive = [...active];
+    const [movedHabit] = reorderedActive.splice(sourceIndex, 1);
+    reorderedActive.splice(targetIndex, 0, movedHabit);
+
+    const previousHabits = habits;
+    const nextHabits = [...reorderedActive, ...archived];
+    setHabits(nextHabits);
+
+    try {
+      const res = await fetch('/api/habits/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ habitIds: reorderedActive.map((habit) => habit.id) }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to persist habit order');
+      }
+    } catch (err) {
+      console.error('Failed to reorder habits:', err);
+      setHabits(previousHabits);
+    }
+  };
+
   const scheduleLabel = (habit: HabitWithSteps): string => {
     const s = habit.schedule;
     switch (s.type) {
@@ -82,11 +114,32 @@ export default function HabitList({ onEdit, refreshKey }: HabitListProps) {
   const renderHabitCard = (habit: HabitWithSteps, dimmed = false) => (
     <div
       key={habit.id}
+      onDragOver={(event) => {
+        if (!dimmed) event.preventDefault();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        if (dimmed || draggedHabitId === null) return;
+        void reorderActiveHabits(draggedHabitId, habit.id);
+        setDraggedHabitId(null);
+      }}
       className={`bg-surface-light rounded-lg p-4 flex items-center justify-between ${
         dimmed ? 'opacity-50' : ''
       }`}
     >
-      <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {!dimmed && (
+          <button
+            type="button"
+            draggable
+            onDragStart={() => setDraggedHabitId(habit.id)}
+            onDragEnd={() => setDraggedHabitId(null)}
+            aria-label={`Drag ${habit.name}`}
+            className="text-gray-400 hover:text-white cursor-grab active:cursor-grabbing"
+          >
+            ≡
+          </button>
+        )}
         <a
           href={`/habits/${habit.id}`}
           className="font-medium text-sm hover:text-info transition-colors"
