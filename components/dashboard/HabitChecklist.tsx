@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Habit, EntryWithSteps, HabitStep } from '@/lib/types';
+import { isScheduledOn } from '@/lib/schedule';
 import DateNavigator from './DateNavigator';
 import HabitChecklistItem from './HabitChecklistItem';
 
@@ -52,6 +53,8 @@ export default function HabitChecklist() {
   const getEntryForHabit = (habitId: number) =>
     entries.find((e) => e.habit_id === habitId) ?? null;
 
+  const visibleHabits = habits.filter((habit) => isScheduledOn(habit.schedule, date));
+
   return (
     <div className="flex-[1.2]">
       <div className="bg-surface rounded-xl p-5">
@@ -66,16 +69,13 @@ export default function HabitChecklist() {
               <div key={i} className="h-12 bg-surface-light rounded-lg animate-pulse" />
             ))}
           </div>
-        ) : habits.length === 0 ? (
+        ) : visibleHabits.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-400 text-sm">No habits yet.</p>
-            <a href="/manage" className="text-info text-sm hover:underline mt-1 inline-block">
-              Add your first habit
-            </a>
+            <p className="text-gray-400 text-sm">No habits scheduled for this date.</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {habits.map((habit) => (
+            {visibleHabits.map((habit) => (
               <HabitChecklistItem
                 key={habit.id}
                 habit={habit}
