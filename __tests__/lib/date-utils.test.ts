@@ -3,7 +3,7 @@ import { toDateStr, getWeekRange, getMonthRange, getDayOfWeek, daysBetween } fro
 
 describe('date-utils', () => {
   it('toDateStr formats a Date to YYYY-MM-DD', () => {
-    expect(toDateStr(new Date('2026-03-17'))).toBe('2026-03-17');
+    expect(toDateStr(new Date(2026, 2, 17))).toBe('2026-03-17');
   });
   it('getWeekRange returns Mon-Sun for a given date', () => {
     const { start, end } = getWeekRange('2026-03-17');

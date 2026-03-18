@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { addDays } from '@/lib/date-utils';
 
 interface DateNavigatorProps {
   date: string;
@@ -25,16 +25,7 @@ function formatDisplayDate(dateStr: string): string {
   });
 }
 
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
 export default function DateNavigator({ date, onDateChange }: DateNavigatorProps) {
-  const today = new Date().toISOString().split('T')[0];
-  const isToday = date === today;
-
   return (
     <div className="flex items-center gap-3">
       <button
@@ -50,11 +41,8 @@ export default function DateNavigator({ date, onDateChange }: DateNavigatorProps
         {formatDisplayDate(date)}
       </span>
       <button
-        onClick={() => !isToday && onDateChange(addDays(date, 1))}
-        className={`p-2 rounded-lg transition-colors ${
-          isToday ? 'opacity-30 cursor-not-allowed' : 'bg-surface-light hover:bg-surface-light/80'
-        }`}
-        disabled={isToday}
+        onClick={() => onDateChange(addDays(date, 1))}
+        className="p-2 rounded-lg bg-surface-light hover:bg-surface-light/80 transition-colors"
         aria-label="Next day"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

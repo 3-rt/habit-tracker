@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { HabitType, Schedule, HabitWithSteps } from '@/lib/types';
+import { toDateStr } from '@/lib/date-utils';
 import StepEditor from './StepEditor';
 
 interface HabitFormProps {
@@ -35,7 +36,7 @@ export default function HabitForm({ habit, onSave, onCancel }: HabitFormProps) {
     habit?.schedule?.type === 'interval' ? habit.schedule.every.toString() : '2'
   );
   const [intervalStart, setIntervalStart] = useState<string>(
-    habit?.schedule?.type === 'interval' ? habit.schedule.start : new Date().toISOString().split('T')[0]
+    habit?.schedule?.type === 'interval' ? habit.schedule.start : toDateStr(new Date())
   );
   const [xPerWeekTimes, setXPerWeekTimes] = useState<string>(
     habit?.schedule?.type === 'x_per_week' ? habit.schedule.times.toString() : '3'

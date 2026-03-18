@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Habit, EntryWithSteps, HabitStep } from '@/lib/types';
 import { isScheduledOn } from '@/lib/schedule';
+import { toDateStr } from '@/lib/date-utils';
 import DateNavigator from './DateNavigator';
 import HabitChecklistItem from './HabitChecklistItem';
 
 export default function HabitChecklist() {
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => toDateStr(new Date()));
   const [habits, setHabits] = useState<Habit[]>([]);
   const [entries, setEntries] = useState<EntryWithSteps[]>([]);
   const [stepsMap, setStepsMap] = useState<Record<number, HabitStep[]>>({});

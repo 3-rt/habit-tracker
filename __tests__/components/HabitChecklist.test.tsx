@@ -3,14 +3,18 @@ import { act, render, screen } from '@testing-library/react';
 import HabitChecklist from '@/components/dashboard/HabitChecklist';
 
 describe('HabitChecklist', () => {
+  const originalTz = process.env.TZ;
+
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-03-18T12:00:00Z'));
+    process.env.TZ = 'America/Chicago';
+    vi.setSystemTime(new Date('2026-03-18T04:30:00Z'));
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    process.env.TZ = originalTz;
   });
 
   it('shows only habits scheduled for the selected date', async () => {
@@ -44,7 +48,7 @@ describe('HabitChecklist', () => {
         };
       }
 
-      if (url === '/api/entries?date=2026-03-18') {
+      if (url === '/api/entries?date=2026-03-17') {
         return {
           json: async () => [],
         };
@@ -61,8 +65,8 @@ describe('HabitChecklist', () => {
       await vi.runAllTimersAsync();
     });
 
-    expect(screen.getByText('Wednesday habit')).toBeDefined();
-    expect(screen.queryByText('Tuesday habit')).toBeNull();
+    expect(screen.getByText('Tuesday habit')).toBeDefined();
+    expect(screen.queryByText('Wednesday habit')).toBeNull();
   });
 
   it('preserves API order after filtering visible habits', async () => {
@@ -76,7 +80,7 @@ describe('HabitChecklist', () => {
               id: 1,
               name: 'Morning skincare',
               type: 'yes_no',
-              schedule: { type: 'weekly', days: ['wed'] },
+              schedule: { type: 'weekly', days: ['tue'] },
               unit: null,
               target: null,
               sort_order: 2,
@@ -87,7 +91,7 @@ describe('HabitChecklist', () => {
               id: 2,
               name: 'Go to the gym',
               type: 'yes_no',
-              schedule: { type: 'weekly', days: ['wed'] },
+              schedule: { type: 'weekly', days: ['tue'] },
               unit: null,
               target: null,
               sort_order: 1,
@@ -109,7 +113,7 @@ describe('HabitChecklist', () => {
         };
       }
 
-      if (url === '/api/entries?date=2026-03-18') {
+      if (url === '/api/entries?date=2026-03-17') {
         return {
           json: async () => [],
         };
@@ -128,8 +132,9 @@ describe('HabitChecklist', () => {
 
     const skincare = screen.getByText('Morning skincare');
     const gym = screen.getByText('Go to the gym');
+    const tuesdayHabit = screen.getByText('Tuesday habit');
 
     expect(skincare.compareDocumentPosition(gym) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByText('Tuesday habit')).toBeNull();
+    expect(gym.compareDocumentPosition(tuesdayHabit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Entry, Schedule } from '@/lib/types';
+import { toDateStr } from '@/lib/date-utils';
 
 interface CalendarViewProps {
   entries: Entry[];
@@ -84,7 +85,7 @@ export default function CalendarView({ entries, month, schedule, onMonthChange }
   const [year, monthNum] = displayMonth.split('-').map(Number);
   const daysInMonth = getDaysInMonth(year, monthNum);
   const firstDay = getFirstDayOfWeek(year, monthNum);
-  const today = new Date().toISOString().split('T')[0];
+  const today = toDateStr(new Date());
 
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
