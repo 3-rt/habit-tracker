@@ -73,3 +73,19 @@ export interface WeeklySummary {
   completed: number;
   total: number;
 }
+
+export interface MonthlySummaryDay {
+  date: string;
+  scheduled: number;
+  completed: number;
+  completion_rate: number;
+  fully_completed: boolean;
+}
+
+export interface MonthlySummary {
+  month: string;
+  days: MonthlySummaryDay[];
+  fully_completed_days: number;
+  completion_rate: number;
+  longest_streak_in_month: number;
+}

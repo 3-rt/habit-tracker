@@ -1,9 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { calculateStreak } from '@/lib/streaks';
 import type { Schedule } from '@/lib/types';
+import { NextRequest } from 'next/server';
+
+vi.mock('@/db/connection', () => ({
+  getDb: () => db,
+}));
 
 const TEST_DB = path.join(__dirname, 'test-stats-api.db');
 let db: Database.Database;
@@ -92,5 +97,63 @@ describe('stats data operations', () => {
     const doneCount = db.prepare("SELECT COUNT(*) as c FROM entry_steps WHERE entry_id = ? AND completed = 1").get(entryId) as any;
     const isComplete = stepCount.c > 0 && doneCount.c >= stepCount.c;
     expect(isComplete).toBe(true);
+  });
+
+  it('returns a monthly summary for the requested month', async () => {
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)")
+      .run('Daily', 'yes_no', '{"type":"daily"}', '2026-03-01T00:00:00Z', 1);
+    db.prepare("INSERT INTO habits (name, type, schedule, created_at, sort_order) VALUES (?, ?, ?, ?, ?)")
+      .run('Wednesday only', 'yes_no', '{"type":"weekly","days":["wed"]}', '2026-03-01T00:00:00Z', 2);
+    const now = '2026-03-12T10:00:00Z';
+    db.prepare("INSERT INTO entries (habit_id, date, value, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(1, '2026-03-11', 1, now, now);
+    db.prepare("INSERT INTO entries (habit_id, date, value, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(1, '2026-03-12', 1, now, now);
+    db.prepare("INSERT INTO entries (habit_id, date, value, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(2, '2026-03-11', 1, now, now);
+
+    const { GET } = await import('@/app/api/stats/route');
+    const res = await GET(new NextRequest('http://localhost/api/stats?month=2026-03'));
+    const json = await res.json();
+
+    expect(json.monthlySummary).toEqual(
+      expect.objectContaining({
+        month: '2026-03',
+        days: expect.any(Array),
+        fully_completed_days: expect.any(Number),
+        completion_rate: expect.any(Number),
+        longest_streak_in_month: expect.any(Number),
+      })
+    );
+
+    const march11 = json.monthlySummary.days.find((day: any) => day.date === '2026-03-11');
+    const march12 = json.monthlySummary.days.find((day: any) => day.date === '2026-03-12');
+    const march13 = json.monthlySummary.days.find((day: any) => day.date === '2026-03-13');
+
+    expect(march11).toEqual(
+      expect.objectContaining({
+        scheduled: 2,
+        completed: 2,
+        completion_rate: 1,
+        fully_completed: true,
+      })
+    );
+    expect(march12).toEqual(
+      expect.objectContaining({
+        scheduled: 1,
+        completed: 1,
+        completion_rate: 1,
+        fully_completed: true,
+      })
+    );
+    expect(march13).toEqual(
+      expect.objectContaining({
+        scheduled: 1,
+        completed: 0,
+        completion_rate: 0,
+        fully_completed: false,
+      })
+    );
+    expect(json.monthlySummary.fully_completed_days).toBe(2);
   });
 });
