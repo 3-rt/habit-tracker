@@ -1,44 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { HabitStats, MonthlySummary, WeeklySummary } from '@/lib/types';
+import type { HabitStats, WeeklySummary } from '@/lib/types';
 import WeeklyHeatmap from './WeeklyHeatmap';
-import MonthlyHeatmap from './MonthlyHeatmap';
 
 interface StatsResponse {
   stats: HabitStats[];
   weeklySummary: WeeklySummary[];
-  monthlySummary: MonthlySummary;
-}
-
-function getCurrentMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function shiftMonth(month: string, delta: number): string {
-  const [year, monthNum] = month.split('-').map(Number);
-  const date = new Date(year, monthNum - 1 + delta, 1);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function formatMonth(month: string): string {
-  const [year, monthNum] = month.split('-').map(Number);
-  return new Date(year, monthNum - 1, 1).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
 }
 
 export default function StatsPanel() {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(getCurrentMonth);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch(`/api/stats?month=${month}`);
+        const res = await fetch('/api/stats');
         const json = await res.json();
         setData(json);
       } catch (error) {
@@ -47,7 +25,7 @@ export default function StatsPanel() {
       setLoading(false);
     }
     fetchStats();
-  }, [month]);
+  }, []);
 
   const weeklyCompletionRate = data?.weeklySummary
     ? (() => {
@@ -108,48 +86,6 @@ export default function StatsPanel() {
         <div>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Weekly Heatmap</h3>
           <WeeklyHeatmap data={data?.weeklySummary ?? []} />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide">This Month</h3>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setMonth((current) => shiftMonth(current, -1))}
-                className="p-1.5 rounded-md bg-surface-light hover:bg-surface-light/80 transition-colors"
-                aria-label="Previous month"
-              >
-                &larr;
-              </button>
-              <span className="text-sm font-medium min-w-[120px] text-center">{formatMonth(month)}</span>
-              <button
-                onClick={() => setMonth((current) => shiftMonth(current, 1))}
-                className="p-1.5 rounded-md bg-surface-light hover:bg-surface-light/80 transition-colors"
-                aria-label="Next month"
-              >
-                &rarr;
-              </button>
-            </div>
-          </div>
-
-          <MonthlyHeatmap month={data?.monthlySummary.month ?? month} days={data?.monthlySummary.days ?? []} />
-
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            <div className="bg-surface-light rounded-lg p-3">
-              <div className="text-xs text-gray-400 uppercase tracking-wide">Fully completed days</div>
-              <div className="text-2xl font-bold text-done mt-1">{data?.monthlySummary.fully_completed_days ?? 0}</div>
-            </div>
-            <div className="bg-surface-light rounded-lg p-3">
-              <div className="text-xs text-gray-400 uppercase tracking-wide">Monthly completion</div>
-              <div className="text-2xl font-bold mt-1">
-                {Math.round((data?.monthlySummary.completion_rate ?? 0) * 100)}%
-              </div>
-            </div>
-            <div className="bg-surface-light rounded-lg p-3">
-              <div className="text-xs text-gray-400 uppercase tracking-wide">Longest streak</div>
-              <div className="text-2xl font-bold mt-1">{data?.monthlySummary.longest_streak_in_month ?? 0} days</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
