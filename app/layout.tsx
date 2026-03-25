@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import SuppressExtensionErrors from '@/components/SuppressExtensionErrors';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -10,10 +9,18 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen">
-          <SuppressExtensionErrors />
-          {children}
-        </body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.addEventListener('unhandledrejection', function(e) {
+            var stack = (e.reason && e.reason.stack) || '';
+            var msg = (e.reason && e.reason.message) || '';
+            if (stack.indexOf('chrome-extension://') !== -1 || msg.indexOf('MetaMask') !== -1) {
+              e.preventDefault();
+            }
+          });
+        `}} />
+      </head>
+      <body className="min-h-screen">{children}</body>
     </html>
   );
 }
